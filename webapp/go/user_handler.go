@@ -168,7 +168,7 @@ func postIconHandler(c echo.Context) error {
 	// SHA256生成
 	iconHash := sha256.Sum256(req.Image)
 	// 最新のSHAを更新
-	if _, err := tx.ExecContext(ctx, "UPDATE latest_sha256 SET sha = ? WHERE user_id = ?", iconHash, userID); err != nil {
+	if _, err := tx.ExecContext(ctx, "INSERT INTO latest_sha256 (user_id, sha) VALUES(?, ?) ON DUPLICATE KEY UPDATE sha=?", userID, iconHash, iconHash); err != nil {
 		// エラーが起きても何もしない
 	}
 
@@ -464,7 +464,7 @@ func fillUserResponse(ctx context.Context, tx *sqlx.Tx, userModel UserModel) (Us
 		// SHA256生成
 		iconHash := sha256.Sum256(image)
 		// 最新のSHAを更新
-		if _, err := tx.ExecContext(ctx, "UPDATE latest_sha256 SET sha = ? WHERE user_id = ?", iconHash, userModel.ID); err != nil {
+		if _, err := tx.ExecContext(ctx, "INSERT INTO latest_sha256 (user_id, sha) VALUES(?, ?) ON DUPLICATE KEY UPDATE sha=?", userModel.ID, iconHash, iconHash); err != nil {
 			// エラーが起きても何もしない
 		}
 		dbSha = fmt.Sprintf("%x", iconHash)
