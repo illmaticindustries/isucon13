@@ -67,7 +67,7 @@ alp:
 .PHONY: pprof
 pprof:
 	ssh isucon13-1 " \
-		/home/isucon/local/golang/bin/go tool pprof -seconds=75 /home/isucon/webapp/go/isupipe http://localhost:6060/debug/pprof/profile"
+		/home/isucon/local/golang/bin/go tool pprof -seconds=90 /home/isucon/webapp/go/isupipe http://localhost:6060/debug/pprof/profile"
 
 pprof-show:
 	$(eval latest := $(shell ssh isucon13-1 "ls -rt ~/pprof/ | tail -n 1"))
