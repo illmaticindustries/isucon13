@@ -117,7 +117,7 @@ func getIconHandler(c echo.Context) error {
 		}
 	}
 	// SHA合致したら304を返す
-	if nowSha == dbSha {
+	if nowSha != "" && nowSha == dbSha {
 		return c.NoContent(http.StatusNotModified)
 	}
 
