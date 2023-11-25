@@ -1,0 +1,30 @@
+ssh isucon13-1 "sudo alp ltsv --file=/var/log/nginx/access.log --nosave-pos --pos /tmp/alp.pos --sort sum --reverse -o count,method,uri,min,max,sum,avg,p99 -m /api/livestream/[0-9]+/report,/api/user/[0-9a-zA-Z]+/icon,/api/livestream/[0-9]+/ngwords,/api/livestream/[0-9]+/reaction,/api/livestream/[0-9]+/livecomment/[0-9]+/report,/api/livestream/[0-9]+/exit,/api/livestream/[0-9]+/enter,/api/user/[0-9a-zA-Z]+/theme,/api/livestream/[0-9]+/livecomment,/api/livestream/[0-9]+,/api/user/[0-9a-zA-Z]+/statistics,/api/livestream/search -q"
++-------+--------+--------------------------------------------------+--------+--------+---------+--------+--------+
+| COUNT | METHOD |                       URI                        |  MIN   |  MAX   |   SUM   |  AVG   |  P99   |
++-------+--------+--------------------------------------------------+--------+--------+---------+--------+--------+
+| 2376  | GET    | /api/user/[0-9a-zA-Z]+/icon                      | 0.004  | 0.900  | 174.992 | 0.074  | 0.500  |
+| 282   | GET    | /api/livestream/[0-9]+/livecomment               | 0.004  | 1.536  | 113.368 | 0.402  | 1.392  |
+| 314   | GET    | /api/livestream/[0-9]+/reaction                  | 0.004  | 1.564  | 101.928 | 0.325  | 1.280  |
+| 23    | POST   | /api/livestream/[0-9]+                           | 0.296  | 7.496  | 94.708  | 4.118  | 7.496  |
+| 7     | GET    | /api/user/[0-9a-zA-Z]+/statistics                | 2.660  | 20.004 | 91.016  | 13.002 | 20.004 |
+| 52    | GET    | /api/livestream/search                           | 0.072  | 3.652  | 66.664  | 1.282  | 3.652  |
+| 290   | POST   | /api/livestream/[0-9]+/livecomment               | 0.000  | 0.832  | 53.280  | 0.184  | 0.660  |
+| 220   | POST   | /api/register                                    | 0.004  | 0.652  | 47.028  | 0.214  | 0.608  |
+| 101   | POST   | /api/livestream/reservation                      | 0.188  | 1.060  | 45.796  | 0.453  | 1.020  |
+| 266   | POST   | /api/livestream/[0-9]+/reaction                  | 0.008  | 0.716  | 34.144  | 0.128  | 0.552  |
+| 217   | POST   | /api/icon                                        | 0.012  | 0.916  | 29.680  | 0.137  | 0.708  |
+| 225   | POST   | /api/login                                       | 0.004  | 0.552  | 14.488  | 0.064  | 0.456  |
+| 3     | GET    | /api/livestream/[0-9]+                           | 0.004  | 7.048  | 13.968  | 4.656  | 7.048  |
+| 74    | GET    | /api/livestream                                  | 0.012  | 0.800  | 11.944  | 0.161  | 0.800  |
+| 1     | POST   | /api/initialize                                  | 11.332 | 11.332 | 11.332  | 11.332 | 11.332 |
+| 48    | POST   | /api/livestream/[0-9]+/livecomment/[0-9]+/report | 0.008  | 0.596  | 9.300   | 0.194  | 0.596  |
+| 44    | GET    | /api/livestream/[0-9]+/report                    | 0.004  | 0.584  | 5.848   | 0.133  | 0.584  |
+| 81    | GET    | /api/tag                                         | 0.008  | 0.496  | 5.132   | 0.063  | 0.496  |
+| 31    | GET    | /api/livestream/[0-9]+/ngwords                   | 0.008  | 0.452  | 4.868   | 0.157  | 0.452  |
+| 32    | POST   | /api/livestream/[0-9]+/enter                     | 0.004  | 0.308  | 2.768   | 0.087  | 0.308  |
+| 22    | DELETE | /api/livestream/[0-9]+/exit                      | 0.004  | 0.352  | 1.748   | 0.079  | 0.352  |
+| 6     | GET    | /api/user/[0-9a-zA-Z]+/theme                     | 0.012  | 0.072  | 0.132   | 0.022  | 0.072  |
+| 3     | GET    | /api/user/me                                     | 0.000  | 0.004  | 0.008   | 0.003  | 0.004  |
+| 1     | GET    | /api/user/test                                   | 0.000  | 0.000  | 0.000   | 0.000  | 0.000  |
+| 1     | GET    | /api/payment                                     | 0.000  | 0.000  | 0.000   | 0.000  | 0.000  |
++-------+--------+--------------------------------------------------+--------+--------+---------+--------+--------+
