@@ -165,6 +165,12 @@ func postIconHandler(c echo.Context) error {
 	if err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, "failed to insert new user icon: "+err.Error())
 	}
+	// SHA256生成
+	iconHash := sha256.Sum256(req.Image)
+	// 最新のSHAを更新
+	if _, err := tx.ExecContext(ctx, "UPDATE latest_sha256 SET sha = ? WHERE user_id = ?", iconHash, userID); err != nil {
+		// エラーが起きても何もしない
+	}
 
 	// 画像を生成する
 	now := time.Now() // 現在の時刻を取得
@@ -444,12 +450,25 @@ func fillUserResponse(ctx context.Context, tx *sqlx.Tx, userModel UserModel) (Us
 			return User{}, err
 		}
 	}
-	iconHash := sha256.Sum256(image)
-	// 最新のSHAを更新
-	if _, err := tx.ExecContext(ctx, "UPDATE latest_sha256 SET sha = ? WHERE user_id = ?", iconHash, userModel.ID); err != nil {
-		// エラーが起きても何もしない
+	// dbからSHAを取得
+	var dbSha string
+	if err := tx.GetContext(ctx, &dbSha, "SELECT sha FROM latest_sha256 WHERE user_id = ?", userModel.ID); err != nil {
+		if err != sql.ErrNoRows {
+			return User{}, err
+		}
 	}
+	// SHAがあったら再計算しない
+	if dbSha != "" {
 
+	} else {
+		// SHA256生成
+		iconHash := sha256.Sum256(image)
+		// 最新のSHAを更新
+		if _, err := tx.ExecContext(ctx, "UPDATE latest_sha256 SET sha = ? WHERE user_id = ?", iconHash, userModel.ID); err != nil {
+			// エラーが起きても何もしない
+		}
+		dbSha = fmt.Sprintf("%x", iconHash)
+	}
 	user := User{
 		ID:          userModel.ID,
 		Name:        userModel.Name,
@@ -459,7 +478,7 @@ func fillUserResponse(ctx context.Context, tx *sqlx.Tx, userModel UserModel) (Us
 			ID:       themeModel.ID,
 			DarkMode: themeModel.DarkMode,
 		},
-		IconHash: fmt.Sprintf("%x", iconHash),
+		IconHash: dbSha,
 	}
 
 	return user, nil
