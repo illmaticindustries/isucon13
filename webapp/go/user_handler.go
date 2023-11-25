@@ -113,11 +113,9 @@ func getIconHandler(c echo.Context) error {
 	// SHAを取得して変化がなければ304を返す
 	nowSha := c.Request().Header.Get("If-None-Match")
 	var dbSha string
-	if err := tx.GetContext(ctx, &dbSha, "SELECT sha FROM latest_sha256 WHERE user_id = ?", user.ID); err != nil {
-		if err != sql.ErrNoRows {
-			return echo.NewHTTPError(http.StatusInternalServerError, "SHA256 304 ERROR: "+err.Error())
-		}
-	}
+	// var found bool
+	dbSha, _ = cache.Get(int(user.ID))
+
 	// SHA合致したら304を返す
 	if nowSha != "" && nowSha == dbSha {
 		c.Logger().Info("ICON CACHE HIT!!!!")
@@ -191,9 +189,7 @@ func postIconHandler(c echo.Context) error {
 	// SHA256生成
 	iconHash := sha256.Sum256(req.Image)
 	iconHashStr := fmt.Sprintf("%x", iconHash)
-	if _, err := tx.ExecContext(ctx, "INSERT INTO latest_sha256 (user_id, sha) VALUES(?, ?) ON DUPLICATE KEY UPDATE sha=?", userID, iconHashStr, iconHashStr); err != nil {
-		// エラーが起きても何もしない
-	}
+	cache.Set(int(userID), iconHashStr)
 
 	// 画像を生成する
 	now := time.Now() // 現在の時刻を取得
@@ -479,10 +475,15 @@ func fillUserResponse(ctx context.Context, tx *sqlx.Tx, userModel UserModel) (Us
 		dbSha = fmt.Sprintf("%x", iconHash)
 	}
 	if dbSha != "" {
-		if err := tx.GetContext(ctx, &dbSha, "SELECT sha FROM latest_sha256 WHERE user_id = ?", userModel.ID); err != nil {
-			if err != sql.ErrNoRows {
+		var found bool
+		dbSha, found = cache.Get(int(userModel.ID))
+		if !found {
+			image, err = os.ReadFile(fallbackImage)
+			if err != nil {
 				return User{}, err
 			}
+			iconHash := sha256.Sum256(image)
+			dbSha = fmt.Sprintf("%x", iconHash)
 		}
 	}
 
@@ -494,9 +495,7 @@ func fillUserResponse(ctx context.Context, tx *sqlx.Tx, userModel UserModel) (Us
 		iconHash := sha256.Sum256(image)
 		iconHashStr := fmt.Sprintf("%x", iconHash)
 		// 最新のSHAを更新
-		if _, err := tx.ExecContext(ctx, "INSERT INTO latest_sha256 (user_id, sha) VALUES(?, ?) ON DUPLICATE KEY UPDATE sha=?", userModel.ID, iconHashStr, iconHashStr); err != nil {
-			// エラーが起きても何もしない
-		}
+		cache.Set(int(userModel.ID), iconHashStr)
 		dbSha = iconHashStr
 	}
 	user := User{
