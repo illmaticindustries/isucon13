@@ -1,0 +1,20 @@
+ssh isucon13-1 "sudo alp ltsv --file=/var/log/nginx/access.log --nosave-pos --pos /tmp/alp.pos --sort sum --reverse -o count,method,uri,min,max,sum,avg,p99 -m /api/livestream/[0-9]+/report,/api/user/[0-9a-zA-Z]+/icon,/api/livestream/[0-9]+/ngwords,/api/livestream/[0-9]+/reaction,/api/livestream/[0-9]+/livecomment/[0-9]+/report,/api/livestream/[0-9]+/exit,/api/livestream/[0-9]+/enter,/api/user/[0-9a-zA-Z]+/theme,/api/livestream/[0-9]+/livecomment,/api/livestream/[0-9]+,/api/user/[0-9a-zA-Z]+/statistics,/api/livestream/search -q"
++-------+--------+-----+-----+-----+-----+-----+-----+
+| COUNT | METHOD | URI | MIN | MAX | SUM | AVG | P99 |
++-------+--------+-----+-----+-----+-----+-----+-----+
++-------+--------+-----+-----+-----+-----+-----+-----+
+ssh isucon13-1 "sudo alp ltsv --file=/var/log/nginx/access.log --nosave-pos --pos /tmp/alp.pos --sort sum --reverse -o count,method,uri,min,max,sum,avg,p99 -m /api/livestream/[0-9]+/report,/api/user/[0-9a-zA-Z]+/icon,/api/livestream/[0-9]+/ngwords,/api/livestream/[0-9]+/reaction,/api/livestream/[0-9]+/livecomment/[0-9]+/report,/api/livestream/[0-9]+/exit,/api/livestream/[0-9]+/enter,/api/user/[0-9a-zA-Z]+/theme,/api/livestream/[0-9]+/livecomment,/api/livestream/[0-9]+,/api/user/[0-9a-zA-Z]+/statistics,/api/livestream/search -q"
++-------+--------+-----+-----+-----+-----+-----+-----+
+| COUNT | METHOD | URI | MIN | MAX | SUM | AVG | P99 |
++-------+--------+-----+-----+-----+-----+-----+-----+
++-------+--------+-----+-----+-----+-----+-----+-----+
+ssh isucon13-1 "sudo alp ltsv --file=/var/log/nginx/access.log --nosave-pos --pos /tmp/alp.pos --sort sum --reverse -o count,method,uri,min,max,sum,avg,p99 -m /api/livestream/[0-9]+/report,/api/user/[0-9a-zA-Z]+/icon,/api/livestream/[0-9]+/ngwords,/api/livestream/[0-9]+/reaction,/api/livestream/[0-9]+/livecomment/[0-9]+/report,/api/livestream/[0-9]+/exit,/api/livestream/[0-9]+/enter,/api/user/[0-9a-zA-Z]+/theme,/api/livestream/[0-9]+/livecomment,/api/livestream/[0-9]+,/api/user/[0-9a-zA-Z]+/statistics,/api/livestream/search -q"
++-------+--------+-----+-----+-----+-----+-----+-----+
+| COUNT | METHOD | URI | MIN | MAX | SUM | AVG | P99 |
++-------+--------+-----+-----+-----+-----+-----+-----+
++-------+--------+-----+-----+-----+-----+-----+-----+
+ssh isucon13-1 "sudo alp ltsv --file=/var/log/nginx/access.log --nosave-pos --pos /tmp/alp.pos --sort sum --reverse -o count,method,uri,min,max,sum,avg,p99 -m /api/livestream/[0-9]+/report,/api/user/[0-9a-zA-Z]+/icon,/api/livestream/[0-9]+/ngwords,/api/livestream/[0-9]+/reaction,/api/livestream/[0-9]+/livecomment/[0-9]+/report,/api/livestream/[0-9]+/exit,/api/livestream/[0-9]+/enter,/api/user/[0-9a-zA-Z]+/theme,/api/livestream/[0-9]+/livecomment,/api/livestream/[0-9]+,/api/user/[0-9a-zA-Z]+/statistics,/api/livestream/search -q"
++-------+--------+-----+-----+-----+-----+-----+-----+
+| COUNT | METHOD | URI | MIN | MAX | SUM | AVG | P99 |
++-------+--------+-----+-----+-----+-----+-----+-----+
++-------+--------+-----+-----+-----+-----+-----+-----+
