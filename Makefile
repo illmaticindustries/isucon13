@@ -23,14 +23,17 @@ restart:
 mysql-deploy:
 	ssh isucon13-1 "sudo dd of=/etc/mysql/mysql.conf.d/mysqld.cnf" < ./etc/mysql/mysql.conf.d/mysqld.cnf
 	ssh isucon13-2 "sudo dd of=/etc/mysql/mysql.conf.d/mysqld.cnf" < ./etc/mysql/mysql.conf.d/mysqld.cnf
+	ssh isucon13-3 "sudo dd of=/etc/mysql/mysql.conf.d/mysqld.cnf" < ./etc/mysql/mysql.conf.d/mysqld.cnf
 
 mysql-rotate:
 	ssh isucon13-1 "sudo rm -f /var/log/mysql/mysql-slow.log"
 	ssh isucon13-2 "sudo rm -f /var/log/mysql/mysql-slow.log"
+	ssh isucon13-3 "sudo rm -f /var/log/mysql/mysql-slow.log"
 
 mysql-restart:
 	ssh isucon13-1 "sudo systemctl restart mysql.service"
 	ssh isucon13-2 "sudo systemctl restart mysql.service"
+	ssh isucon13-3 "sudo systemctl restart mysql.service"
 
 nginx-deploy:
 	ssh isucon13-1 "sudo dd of=/etc/nginx/nginx.conf" < ./etc/nginx/nginx.conf
@@ -56,6 +59,9 @@ pt-query-digest-1:
 
 pt-query-digest-2:
 	ssh isucon13-2 "sudo pt-query-digest --limit 10 /var/log/mysql/mysql-slow.log"
+
+pt-query-digest-3:
+	ssh isucon13-3 "sudo pt-query-digest --limit 10 /var/log/mysql/mysql-slow.log"
 
 ALPSORT=sum
 # /api/livestream/7508/report
