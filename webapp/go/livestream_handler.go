@@ -485,6 +485,13 @@ func getLivecommentReportsHandler(c echo.Context) error {
 	return c.JSON(http.StatusOK, reports)
 }
 
+// TagModel はtagsテーブルのデータ構造を表します。
+type Tagty struct {
+	ID   int64
+	Name string
+}
+
+
 func fillLivestreamResponse(ctx context.Context, tx *sqlx.Tx, livestreamModel LivestreamModel) (Livestream, error) {
 	ownerModel := UserModel{}
 	if err := tx.GetContext(ctx, &ownerModel, "SELECT * FROM users WHERE id = ?", livestreamModel.UserID); err != nil {
@@ -495,21 +502,39 @@ func fillLivestreamResponse(ctx context.Context, tx *sqlx.Tx, livestreamModel Li
 		return Livestream{}, err
 	}
 
-	var livestreamTagModels []*LivestreamTagModel
-	if err := tx.SelectContext(ctx, &livestreamTagModels, "SELECT * FROM livestream_tags WHERE livestream_id = ?", livestreamModel.ID); err != nil {
+	//var livestreamTagModels []*LivestreamTagModel
+	//if err := tx.SelectContext(ctx, &livestreamTagModels, "SELECT * FROM livestream_tags WHERE livestream_id = ?", livestreamModel.ID); err != nil {
+	//	return Livestream{}, err
+	//}
+
+	//tags := make([]Tag, len(livestreamTagModels))
+	//for i := range livestreamTagModels {
+	//	tagModel := TagModel{}
+	//	if err := tx.GetContext(ctx, &tagModel, "SELECT * FROM tags WHERE id = ?", livestreamTagModels[i].TagID); err != nil {
+	//		return Livestream{}, err
+	//	}
+
+	//	tags[i] = Tag{
+	//		ID:   tagModel.ID,
+	//		Name: tagModel.Name,
+	//	}
+	//}
+
+	// このクエリは、特定のlivestream_idに関連するタグのIDと名前を取得します。
+	const query = `SELECT t.id, t.name FROM tags t INNER JOIN livestream_tags lt ON t.id = lt.tag_id WHERE lt.livestream_id = ?`
+
+	// タグ情報を取得するためにクエリを実行します。
+	var tagModels []Tagty
+	if err := tx.SelectContext(ctx, &tagModels, query, livestreamModel.ID); err != nil {
 		return Livestream{}, err
 	}
 
-	tags := make([]Tag, len(livestreamTagModels))
-	for i := range livestreamTagModels {
-		tagModel := TagModel{}
-		if err := tx.GetContext(ctx, &tagModel, "SELECT * FROM tags WHERE id = ?", livestreamTagModels[i].TagID); err != nil {
-			return Livestream{}, err
-		}
-
+	// 取得したタグ情報を元にTagのスライスを構築します。
+	tags := make([]Tag, len(tagModels))
+	for i, tm := range tagModels {
 		tags[i] = Tag{
-			ID:   tagModel.ID,
-			Name: tagModel.Name,
+			ID:   tm.ID,
+			Name: tm.Name,
 		}
 	}
 
