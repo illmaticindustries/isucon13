@@ -62,9 +62,9 @@ func (r UserRanking) Less(i, j int) bool {
 // UserStats は各ユーザーのリアクションとチップの合計を格納します。
 type UserStats struct {
 	UserID    int64
+	Name      string
 	Reactions int64
 	Tips      int64
-	Name      string
 }
 
 
