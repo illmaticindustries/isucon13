@@ -31,7 +31,7 @@ mysql-restart:
 
 nginx-deploy:
 	ssh isucon13-1 "sudo dd of=/etc/nginx/nginx.conf" < ./etc/nginx/nginx.conf
-	ssh isucon13-1 "sudo dd of=/etc/nginx/sites-available/isuports.conf" < ./etc/nginx/sites-available/isuports.conf
+	ssh isucon13-1 "sudo dd of=/etc/nginx/sites-enabled/isupipe.conf" < ./etc/nginx/sites-enabled/isupipe.conf
 
 nginx-rotate:
 	ssh isucon13-1 "sudo rm -f /var/log/nginx/access.log"
