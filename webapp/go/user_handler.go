@@ -120,6 +120,7 @@ func getIconHandler(c echo.Context) error {
 	}
 	// SHA合致したら304を返す
 	if nowSha != "" && nowSha == dbSha {
+		c.Logger().Info("ICON CACHE HIT!!!!")
 		return c.NoContent(http.StatusNotModified)
 	}
 
@@ -153,7 +154,7 @@ func readImageData(userId int) ([]byte, error) {
 
 	sort.Strings(nameList)
 	filename := nameList[len(nameList)-1]
-	imgData, err := os.ReadFile(filename)
+	imgData, err := os.ReadFile(fmt.Sprintf("%s/%s", IMAGE_DIR, filename))
 	if err != nil {
 		return nil, err
 	}
