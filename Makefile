@@ -52,13 +52,20 @@ pt-query-digest:
 	ssh isucon13-1 "sudo pt-query-digest --limit 10 /var/log/mysql/mysql-slow.log"
 
 ALPSORT=sum
-# /api/player/competition/[0-9a-z\-]+/ranking
-# /api/player/player/[0-9a-z]+
-# /api/organizer/competition/[0-9a-z\-]+/finish
-# /api/organizer/competition/[0-9a-z\-]+/score
-# /api/organizer/player/[0-9a-z\-]+/disqualified
-# /api/admin/tenants/billing
-ALPM=/api/player/competition/[0-9a-z\-]+/ranking,/api/player/player/[0-9a-z]+,/api/organizer/competition/[0-9a-z\-]+/finish,/api/organizer/competition/[0-9a-z\-]+/score,/api/organizer/player/[0-9a-z\-]+/disqualified,/api/admin/tenants/billing
+# /api/livestream/7508/report
+# /api/user/mikakosasaki0/icon
+# /api/livestream/7515/ngwords
+# /api/livestream/7508/reaction
+# /api/livestream/7510/livecomment/1004/report
+# /api/livestream/7497/exit
+# /api/livestream/7497/enter
+# /api/user/jtakahashi0/theme
+# /api/livestream/7510/livecomment
+# /api/livestream/7497
+# /api/user/suzukitsubasa0/statistics
+# /api/livestream/search?tag=%E6%98%A0%E7%94%BB%E3%83%AC%E3%83%93%E3%83%A5%E3%83%BC
+ALPM=/api/livestream/[0-9]+/report,/api/user/[0-9a-zA-Z]+/icon,/api/livestream/[0-9]+/ngwords,/api/livestream/[0-9]+/reaction,/api/livestream/[0-9]+/livecomment/[0-9]+/report,/api/livestream/[0-9]+/exit,/api/livestream/[0-9]+/enter,/api/user/[0-9a-zA-Z]+/theme,/api/livestream/[0-9]+/livecomment,/api/livestream/[0-9]+,/api/user/[0-9a-zA-Z]+/statistics,/api/livestream/search
+
 OUTFORMAT=count,method,uri,min,max,sum,avg,p99
 
 alp:
