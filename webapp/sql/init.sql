@@ -24,4 +24,5 @@ ALTER TABLE `livecomments` auto_increment = 1;
 ALTER TABLE `livestreams` auto_increment = 1;
 ALTER TABLE `users` auto_increment = 1;
 
-CREATE INDEX livestream_id ON livestream_tags (livestream_id)
+DROP INDEX livestream_id ON livestream_tags;
+CREATE INDEX livestream_id ON livestream_tags (livestream_id);
