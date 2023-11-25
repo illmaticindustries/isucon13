@@ -8,6 +8,7 @@ import (
 	"log"
 	"net"
 	"net/http"
+	_ "net/http/pprof"
 	"os"
 	"os/exec"
 	"strconv"
@@ -199,7 +200,9 @@ func main() {
 		os.Exit(1)
 	}
 	powerDNSSubdomainAddress = subdomainAddr
-
+	go func() {
+		log.Println(http.ListenAndServe("localhost:6060", nil))
+	}()
 	// HTTPサーバ起動
 	listenAddr := net.JoinHostPort("", strconv.Itoa(listenPort))
 	if err := e.Start(listenAddr); err != nil {
