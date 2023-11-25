@@ -6,6 +6,7 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	"log"
 	"net/http"
 	"os"
 	"os/exec"
@@ -27,6 +28,8 @@ const (
 	defaultUserIDKey         = "USERID"
 	defaultUsernameKey       = "USERNAME"
 	bcryptDefaultCost        = bcrypt.MinCost
+	IMAGE_DIR                = "/home/isucon/webapp/public/assets/images/"
+	ext                      = "png"
 )
 
 var fallbackImage = "../img/NoImage.jpg"
@@ -148,6 +151,19 @@ func postIconHandler(c echo.Context) error {
 	rs, err := tx.ExecContext(ctx, "INSERT INTO icons (user_id, image) VALUES (?, ?)", userID, req.Image)
 	if err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, "failed to insert new user icon: "+err.Error())
+	}
+
+	// 画像を生成する
+	now := time.Now() // 現在の時刻を取得
+	unixTime := now.Unix()
+	filename := IMAGE_DIR + fmt.Sprintf("%d-", userID) + fmt.Sprintf("%d", unixTime) + "." + ext
+	f, err := os.Create(filename)
+	if err != nil {
+		log.Fatalf("file create error")
+	}
+	_, err = f.Write(req.Image)
+	if err != nil {
+		log.Fatalf("file write error")
 	}
 
 	iconID, err := rs.LastInsertId()
