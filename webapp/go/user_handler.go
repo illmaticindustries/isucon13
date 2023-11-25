@@ -165,6 +165,12 @@ func postIconHandler(c echo.Context) error {
 	if err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, "failed to insert new user icon: "+err.Error())
 	}
+	// SHA256生成
+	iconHash := sha256.Sum256(req.Image)
+	iconHashStr := fmt.Sprintf("%x", iconHash)
+	if _, err := tx.ExecContext(ctx, "INSERT INTO latest_sha256 (user_id, sha) VALUES(?, ?) ON DUPLICATE KEY UPDATE sha=?", userID, iconHashStr, iconHashStr); err != nil {
+		// エラーが起きても何もしない
+	}
 
 	// 画像を生成する
 	now := time.Now() // 現在の時刻を取得
@@ -434,6 +440,8 @@ func fillUserResponse(ctx context.Context, tx *sqlx.Tx, userModel UserModel) (Us
 		return User{}, err
 	}
 
+	// dbからSHAを取得
+	var dbSha string
 	var image []byte
 	if err := tx.GetContext(ctx, &image, "SELECT image FROM icons WHERE user_id = ?", userModel.ID); err != nil {
 		if !errors.Is(err, sql.ErrNoRows) {
@@ -443,13 +451,30 @@ func fillUserResponse(ctx context.Context, tx *sqlx.Tx, userModel UserModel) (Us
 		if err != nil {
 			return User{}, err
 		}
+		iconHash := sha256.Sum256(image)
+		dbSha = fmt.Sprintf("%x", iconHash)
 	}
-	iconHash := sha256.Sum256(image)
-	// 最新のSHAを更新
-	if _, err := tx.ExecContext(ctx, "UPDATE latest_sha256 SET sha = ? WHERE user_id = ?", iconHash, userModel.ID); err != nil {
-		// エラーが起きても何もしない
+	if dbSha != "" {
+		if err := tx.GetContext(ctx, &dbSha, "SELECT sha FROM latest_sha256 WHERE user_id = ?", userModel.ID); err != nil {
+			if err != sql.ErrNoRows {
+				return User{}, err
+			}
+		}
 	}
 
+	// SHAがあったら再計算しない
+	if dbSha != "" {
+
+	} else {
+		// SHA256生成
+		iconHash := sha256.Sum256(image)
+		iconHashStr := fmt.Sprintf("%x", iconHash)
+		// 最新のSHAを更新
+		if _, err := tx.ExecContext(ctx, "INSERT INTO latest_sha256 (user_id, sha) VALUES(?, ?) ON DUPLICATE KEY UPDATE sha=?", userModel.ID, iconHashStr, iconHashStr); err != nil {
+			// エラーが起きても何もしない
+		}
+		dbSha = iconHashStr
+	}
 	user := User{
 		ID:          userModel.ID,
 		Name:        userModel.Name,
@@ -459,7 +484,7 @@ func fillUserResponse(ctx context.Context, tx *sqlx.Tx, userModel UserModel) (Us
 			ID:       themeModel.ID,
 			DarkMode: themeModel.DarkMode,
 		},
-		IconHash: fmt.Sprintf("%x", iconHash),
+		IconHash: dbSha,
 	}
 
 	return user, nil
