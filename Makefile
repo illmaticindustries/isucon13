@@ -8,17 +8,17 @@ deploy:
 
 build:
 	ssh isucon13-1 " \
-		cd /home/isucon/webapp/go/cmd/isuports; \
-		/usr/bin/go build -o isuports"
+		cd /home/isucon/webapp/go; \
+		go build -o isupipe"
 
 go-deploy:
-	scp ./webapp/go/isuports isucon13-1:/home/isucon/webapp/go/
+	scp ./webapp/go/isupipe isucon13-1:/home/isucon/webapp/go/
 
 go-deploy-dir:
 	scp -r ./webapp/go isucon13-1:/home/isucon/webapp/
 
 restart:
-	ssh isucon13-1 "sudo systemctl restart isuports.service"
+	ssh isucon13-1 "sudo systemctl restart isupipe-go.service"
 
 mysql-deploy:
 	ssh isucon13-1 "sudo dd of=/etc/mysql/mysql.conf.d/mysqld.cnf" < ./etc/mysql/mysql.conf.d/mysqld.cnf
@@ -67,7 +67,7 @@ alp:
 .PHONY: pprof
 pprof:
 	ssh isucon13-1 " \
-		/usr/bin/go tool pprof -seconds=75 /home/isucon/webapp/go/isuports http://localhost:6060/debug/pprof/profile"
+		go tool pprof -seconds=75 /home/isucon/webapp/go/isupipe http://localhost:6060/debug/pprof/profile"
 
 pprof-show:
 	$(eval latest := $(shell ssh isucon13-1 "ls -rt ~/pprof/ | tail -n 1"))
