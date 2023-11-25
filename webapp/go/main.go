@@ -5,7 +5,7 @@ package main
 
 import (
 	"fmt"
-	"log"
+	//"log"
 	"net"
 	"net/http"
 	_ "net/http/pprof"
@@ -17,7 +17,7 @@ import (
 	"github.com/go-sql-driver/mysql"
 	"github.com/jmoiron/sqlx"
 	"github.com/labstack/echo/v4"
-	"github.com/labstack/echo/v4/middleware"
+	//"github.com/labstack/echo/v4/middleware"
 
 	"github.com/gorilla/sessions"
 	"github.com/labstack/echo-contrib/session"
@@ -58,7 +58,7 @@ func (c *Cache) Get(key int) (string, bool) {
 }
 
 func init() {
-	log.SetFlags(log.Ldate | log.Ltime | log.Lshortfile)
+	//log.SetFlags(log.Ldate | log.Ltime | log.Lshortfile)
 	if secretKey, ok := os.LookupEnv("ISUCON13_SESSION_SECRETKEY"); ok {
 		secret = []byte(secretKey)
 	}
@@ -144,9 +144,11 @@ func initializeHandler(c echo.Context) error {
 
 func main() {
 	e := echo.New()
-	e.Debug = true
-	e.Logger.SetLevel(echolog.DEBUG)
-	e.Use(middleware.Logger())
+	//e.Debug = true
+	e.Debug = false
+	//e.Logger.SetLevel(echolog.DEBUG)
+	e.Logger.SetLevel(echolog.OFF)
+	//e.Use(middleware.Logger())
 	cookieStore := sessions.NewCookieStore(secret)
 	cookieStore.Options.Domain = "*.u.isucon.dev"
 	e.Use(session.Middleware(cookieStore))
@@ -223,9 +225,9 @@ func main() {
 		os.Exit(1)
 	}
 	powerDNSSubdomainAddress = subdomainAddr
-	go func() {
-		log.Println(http.ListenAndServe("localhost:6060", nil))
-	}()
+	//go func() {
+	//	log.Println(http.ListenAndServe("localhost:6060", nil))
+	//}()
 	// キャッシュの初期化
 	cache = Cache{store: make(map[int]string)}
 	// HTTPサーバ起動
