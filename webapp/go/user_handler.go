@@ -10,6 +10,8 @@ import (
 	"net/http"
 	"os"
 	"os/exec"
+	"sort"
+	"strings"
 	"time"
 
 	"github.com/goccy/go-json"
@@ -121,16 +123,41 @@ func getIconHandler(c echo.Context) error {
 		return c.NoContent(http.StatusNotModified)
 	}
 
-	var image []byte
-	if err := tx.GetContext(ctx, &image, "SELECT image FROM icons WHERE user_id = ?", user.ID); err != nil {
-		if errors.Is(err, sql.ErrNoRows) {
-			return c.File(fallbackImage)
-		} else {
-			return echo.NewHTTPError(http.StatusInternalServerError, "failed to get user icon: "+err.Error())
-		}
+	imgData, err := readImageData(int(user.ID))
+	if err != nil {
+		return echo.NewHTTPError(http.StatusInternalServerError, "failed to get user icon from directory: "+err.Error())
 	}
 
-	return c.Blob(http.StatusOK, "image/jpeg", image)
+	return c.Blob(http.StatusOK, "image/jpeg", imgData)
+}
+
+func readImageData(userId int) ([]byte, error) {
+	prefix := fmt.Sprintf("%d", userId) // ファイル名のプレフィックス
+
+	files, err := os.ReadDir(IMAGE_DIR)
+	if err != nil {
+		fmt.Println("Error reading directory:", err)
+		return nil, err
+	}
+
+	nameList := make([]string, 0, len(files))
+
+	for _, file := range files {
+		if !file.IsDir() && strings.HasPrefix(file.Name(), prefix) {
+			nameList = append(nameList, file.Name())
+		}
+	}
+	if len(nameList) == 0 {
+		return nil, sql.ErrNoRows
+	}
+
+	sort.Strings(nameList)
+	filename := nameList[len(nameList)-1]
+	imgData, err := os.ReadFile(filename)
+	if err != nil {
+		return nil, err
+	}
+	return imgData, nil
 }
 
 func postIconHandler(c echo.Context) error {
@@ -443,7 +470,8 @@ func fillUserResponse(ctx context.Context, tx *sqlx.Tx, userModel UserModel) (Us
 	// dbからSHAを取得
 	var dbSha string
 	var image []byte
-	if err := tx.GetContext(ctx, &image, "SELECT image FROM icons WHERE user_id = ?", userModel.ID); err != nil {
+	image, err := readImageData(int(userModel.ID))
+	if err != nil {
 		if !errors.Is(err, sql.ErrNoRows) {
 			return User{}, err
 		}
