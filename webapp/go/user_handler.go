@@ -490,11 +490,20 @@ func fillUserResponse(ctx context.Context, tx *sqlx.Tx, userModel UserModel) (Us
 
 	} else {
 		// SHA256生成
-		iconHash := sha256.Sum256(image)
-		iconHashStr := fmt.Sprintf("%x", iconHash)
+		// iconHash := sha256.Sum256(image)
+		// iconHashStr := fmt.Sprintf("%x", iconHash)
 		// 最新のSHAを更新
-		cache.Set(int(userModel.ID), iconHashStr)
-		dbSha = iconHashStr
+		// cache.Set(int(userModel.ID), iconHashStr)
+		var found bool
+		dbSha, found = cache.Get(int(userModel.ID))
+		if !found {
+			// SHA256生成
+			iconHash := sha256.Sum256(image)
+			iconHashStr := fmt.Sprintf("%x", iconHash)
+			// 最新のSHAを更新
+			cache.Set(int(userModel.ID), iconHashStr)
+			dbSha = iconHashStr
+		}
 	}
 	user := User{
 		ID:          userModel.ID,
