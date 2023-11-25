@@ -199,7 +199,7 @@ func postIconHandler(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusInternalServerError, "file write error id: "+err.Error())
 	}
 	// SHA256生成
-	iconHash := sha256.Sum256([]byte(filename))
+	iconHash := filename
 	iconHashStr := fmt.Sprintf("%x", iconHash)
 	cache.Set(int(userID), iconHashStr)
 
