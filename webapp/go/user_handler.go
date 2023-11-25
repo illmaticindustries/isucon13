@@ -2,7 +2,7 @@ package main
 
 import (
 	"context"
-	"crypto/sha256"
+	//"crypto/sha256"
 	"database/sql"
 	"errors"
 	"fmt"
@@ -20,6 +20,8 @@ import (
 	"github.com/labstack/echo-contrib/session"
 	"github.com/labstack/echo/v4"
 	"golang.org/x/crypto/bcrypt"
+
+	"github.com/minio/sha256-simd"
 )
 
 const (
