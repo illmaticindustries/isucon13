@@ -6,7 +6,6 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
-	"log"
 	"net/http"
 	"os"
 	"os/exec"
@@ -186,11 +185,6 @@ func postIconHandler(c echo.Context) error {
 	}
 	defer tx.Rollback()
 
-	// SHA256生成
-	iconHash := sha256.Sum256(req.Image)
-	iconHashStr := fmt.Sprintf("%x", iconHash)
-	cache.Set(int(userID), iconHashStr)
-
 	// 画像を生成する
 	now := time.Now() // 現在の時刻を取得
 	unixTime := now.Unix()
@@ -198,12 +192,16 @@ func postIconHandler(c echo.Context) error {
 	filename := IMAGE_DIR + fmt.Sprintf("%d-", userID) + fmt.Sprintf("%d", unixTime) + "." + ext
 	f, err := os.Create(filename)
 	if err != nil {
-		log.Fatalf("file create error")
+		return echo.NewHTTPError(http.StatusInternalServerError, "file create error id: "+err.Error())
 	}
 	_, err = f.Write(req.Image)
 	if err != nil {
-		log.Fatalf("file write error")
+		return echo.NewHTTPError(http.StatusInternalServerError, "file write error id: "+err.Error())
 	}
+	// SHA256生成
+	iconHash := sha256.Sum256([]byte(filename))
+	iconHashStr := fmt.Sprintf("%x", iconHash)
+	cache.Set(int(userID), iconHashStr)
 
 	if err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, "failed to get last inserted icon id: "+err.Error())
