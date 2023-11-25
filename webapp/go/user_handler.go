@@ -126,6 +126,9 @@ func getIconHandler(c echo.Context) error {
 
 	imgData, err := readImageData(int(user.ID))
 	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return c.File(fallbackImage)
+		}
 		return echo.NewHTTPError(http.StatusInternalServerError, "failed to get user icon from directory: "+err.Error())
 	}
 
@@ -185,14 +188,6 @@ func postIconHandler(c echo.Context) error {
 	}
 	defer tx.Rollback()
 
-	if _, err := tx.ExecContext(ctx, "DELETE FROM icons WHERE user_id = ?", userID); err != nil {
-		return echo.NewHTTPError(http.StatusInternalServerError, "failed to delete old user icon: "+err.Error())
-	}
-
-	rs, err := tx.ExecContext(ctx, "INSERT INTO icons (user_id, image) VALUES (?, ?)", userID, req.Image)
-	if err != nil {
-		return echo.NewHTTPError(http.StatusInternalServerError, "failed to insert new user icon: "+err.Error())
-	}
 	// SHA256生成
 	iconHash := sha256.Sum256(req.Image)
 	iconHashStr := fmt.Sprintf("%x", iconHash)
@@ -203,6 +198,7 @@ func postIconHandler(c echo.Context) error {
 	// 画像を生成する
 	now := time.Now() // 現在の時刻を取得
 	unixTime := now.Unix()
+	iconID := unixTime + userID
 	filename := IMAGE_DIR + fmt.Sprintf("%d-", userID) + fmt.Sprintf("%d", unixTime) + "." + ext
 	f, err := os.Create(filename)
 	if err != nil {
@@ -213,7 +209,6 @@ func postIconHandler(c echo.Context) error {
 		log.Fatalf("file write error")
 	}
 
-	iconID, err := rs.LastInsertId()
 	if err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, "failed to get last inserted icon id: "+err.Error())
 	}
