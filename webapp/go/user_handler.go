@@ -10,6 +10,8 @@ import (
 	"net/http"
 	"os"
 	"os/exec"
+	"sort"
+	"strings"
 	"time"
 
 	"github.com/goccy/go-json"
@@ -113,26 +115,53 @@ func getIconHandler(c echo.Context) error {
 	// SHAを取得して変化がなければ304を返す
 	nowSha := c.Request().Header.Get("If-None-Match")
 	var dbSha string
-	if err := tx.GetContext(ctx, &dbSha, "SELECT sha FROM latest_sha256 WHERE user_id = ?", user.ID); err != nil {
-		if err != sql.ErrNoRows {
-			return echo.NewHTTPError(http.StatusInternalServerError, "SHA256 304 ERROR: "+err.Error())
-		}
-	}
+	// var found bool
+	dbSha, _ = cache.Get(int(user.ID))
+
 	// SHA合致したら304を返す
 	if nowSha != "" && nowSha == dbSha {
+		c.Logger().Info("ICON CACHE HIT!!!!")
 		return c.NoContent(http.StatusNotModified)
 	}
 
-	var image []byte
-	if err := tx.GetContext(ctx, &image, "SELECT image FROM icons WHERE user_id = ?", user.ID); err != nil {
+	imgData, err := readImageData(int(user.ID))
+	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return c.File(fallbackImage)
-		} else {
-			return echo.NewHTTPError(http.StatusInternalServerError, "failed to get user icon: "+err.Error())
 		}
+		return echo.NewHTTPError(http.StatusInternalServerError, "failed to get user icon from directory: "+err.Error())
 	}
 
-	return c.Blob(http.StatusOK, "image/jpeg", image)
+	return c.Blob(http.StatusOK, "image/jpeg", imgData)
+}
+
+func readImageData(userId int) ([]byte, error) {
+	prefix := fmt.Sprintf("%d", userId) // ファイル名のプレフィックス
+
+	files, err := os.ReadDir(IMAGE_DIR)
+	if err != nil {
+		fmt.Println("Error reading directory:", err)
+		return nil, err
+	}
+
+	nameList := make([]string, 0, len(files))
+
+	for _, file := range files {
+		if !file.IsDir() && strings.HasPrefix(file.Name(), prefix) {
+			nameList = append(nameList, file.Name())
+		}
+	}
+	if len(nameList) == 0 {
+		return nil, sql.ErrNoRows
+	}
+
+	sort.Strings(nameList)
+	filename := nameList[len(nameList)-1]
+	imgData, err := os.ReadFile(fmt.Sprintf("%s/%s", IMAGE_DIR, filename))
+	if err != nil {
+		return nil, err
+	}
+	return imgData, nil
 }
 
 func postIconHandler(c echo.Context) error {
@@ -159,18 +188,15 @@ func postIconHandler(c echo.Context) error {
 	}
 	defer tx.Rollback()
 
-	if _, err := tx.ExecContext(ctx, "DELETE FROM icons WHERE user_id = ?", userID); err != nil {
-		return echo.NewHTTPError(http.StatusInternalServerError, "failed to delete old user icon: "+err.Error())
-	}
-
-	rs, err := tx.ExecContext(ctx, "INSERT INTO icons (user_id, image) VALUES (?, ?)", userID, req.Image)
-	if err != nil {
-		return echo.NewHTTPError(http.StatusInternalServerError, "failed to insert new user icon: "+err.Error())
-	}
+	// SHA256生成
+	iconHash := sha256.Sum256(req.Image)
+	iconHashStr := fmt.Sprintf("%x", iconHash)
+	cache.Set(int(userID), iconHashStr)
 
 	// 画像を生成する
 	now := time.Now() // 現在の時刻を取得
 	unixTime := now.Unix()
+	iconID := unixTime + userID
 	filename := IMAGE_DIR + fmt.Sprintf("%d-", userID) + fmt.Sprintf("%d", unixTime) + "." + ext
 	f, err := os.Create(filename)
 	if err != nil {
@@ -181,7 +207,6 @@ func postIconHandler(c echo.Context) error {
 		log.Fatalf("file write error")
 	}
 
-	iconID, err := rs.LastInsertId()
 	if err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, "failed to get last inserted icon id: "+err.Error())
 	}
@@ -436,8 +461,11 @@ func fillUserResponse(ctx context.Context, tx *sqlx.Tx, userModel UserModel) (Us
 		return User{}, err
 	}
 
+	// dbからSHAを取得
+	var dbSha string
 	var image []byte
-	if err := tx.GetContext(ctx, &image, "SELECT image FROM icons WHERE user_id = ?", userModel.ID); err != nil {
+	image, err := readImageData(int(userModel.ID))
+	if err != nil {
 		if !errors.Is(err, sql.ErrNoRows) {
 			return User{}, err
 		}
@@ -445,13 +473,33 @@ func fillUserResponse(ctx context.Context, tx *sqlx.Tx, userModel UserModel) (Us
 		if err != nil {
 			return User{}, err
 		}
+		iconHash := sha256.Sum256(image)
+		dbSha = fmt.Sprintf("%x", iconHash)
 	}
-	iconHash := sha256.Sum256(image)
-	// 最新のSHAを更新
-	if _, err := tx.ExecContext(ctx, "UPDATE latest_sha256 SET sha = ? WHERE user_id = ?", iconHash, userModel.ID); err != nil {
-		// エラーが起きても何もしない
+	if dbSha != "" {
+		var found bool
+		dbSha, found = cache.Get(int(userModel.ID))
+		if !found {
+			image, err = os.ReadFile(fallbackImage)
+			if err != nil {
+				return User{}, err
+			}
+			iconHash := sha256.Sum256(image)
+			dbSha = fmt.Sprintf("%x", iconHash)
+		}
 	}
 
+	// SHAがあったら再計算しない
+	if dbSha != "" {
+
+	} else {
+		// SHA256生成
+		iconHash := sha256.Sum256(image)
+		iconHashStr := fmt.Sprintf("%x", iconHash)
+		// 最新のSHAを更新
+		cache.Set(int(userModel.ID), iconHashStr)
+		dbSha = iconHashStr
+	}
 	user := User{
 		ID:          userModel.ID,
 		Name:        userModel.Name,
@@ -461,7 +509,7 @@ func fillUserResponse(ctx context.Context, tx *sqlx.Tx, userModel UserModel) (Us
 			ID:       themeModel.ID,
 			DarkMode: themeModel.DarkMode,
 		},
-		IconHash: fmt.Sprintf("%x", iconHash),
+		IconHash: dbSha,
 	}
 
 	return user, nil

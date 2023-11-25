@@ -12,6 +12,7 @@ import (
 	"os"
 	"os/exec"
 	"strconv"
+	"sync"
 
 	"github.com/go-sql-driver/mysql"
 	"github.com/jmoiron/sqlx"
@@ -32,7 +33,29 @@ var (
 	powerDNSSubdomainAddress string
 	dbConn                   *sqlx.DB
 	secret                   = []byte("isucon13_session_cookiestore_defaultsecret")
+	cache                    Cache
 )
+
+// キャッシュを保持する構造体
+type Cache struct {
+	mu    sync.RWMutex
+	store map[int]string
+}
+
+// キャッシュにデータを追加
+func (c *Cache) Set(key int, value string) {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	c.store[key] = value
+}
+
+// キャッシュからデータを取得
+func (c *Cache) Get(key int) (string, bool) {
+	c.mu.RLock()
+	defer c.mu.RUnlock()
+	val, found := c.store[key]
+	return val, found
+}
 
 func init() {
 	log.SetFlags(log.Ldate | log.Ltime | log.Lshortfile)
@@ -203,6 +226,8 @@ func main() {
 	go func() {
 		log.Println(http.ListenAndServe("localhost:6060", nil))
 	}()
+	// キャッシュの初期化
+	cache = Cache{store: make(map[int]string)}
 	// HTTPサーバ起動
 	listenAddr := net.JoinHostPort("", strconv.Itoa(listenPort))
 	if err := e.Start(listenAddr); err != nil {
