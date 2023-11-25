@@ -61,10 +61,10 @@ func (r UserRanking) Less(i, j int) bool {
 
 // UserStats は各ユーザーのリアクションとチップの合計を格納します。
 type UserStats struct {
-	UserID    int64
-	Name      string
-	Reactions int64
-	Tips      int64
+	UserID    int64 `db:"user_id"`
+	Name      string `db:"name"`
+	Reactions int64 `db:"reactions"`
+	Tips      int64 `db:"tips"`
 }
 
 
@@ -135,7 +135,7 @@ func getUserStatisticsHandler(c echo.Context) error {
 
 	// ユーザーのスタッツを一度のクエリで取得
 	const userStatsQuery = `
-	SELECT u.id as user_id, u.name, 
+	SELECT u.id as user_id, u.name as name, 
 	       IFNULL(SUM(r.count), 0) as reactions,
 	       IFNULL(SUM(lc.tip), 0) as tips
 	FROM users u
