@@ -108,6 +108,19 @@ func getIconHandler(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusInternalServerError, "failed to get user: "+err.Error())
 	}
 
+	// SHAを取得して変化がなければ304を返す
+	nowSha := c.Request().Header.Get("If-None-Match")
+	var dbSha string
+	if err := tx.GetContext(ctx, &dbSha, "SELECT sha FROM latest_sha256 WHERE user_id = ?", user.ID); err != nil {
+		if err != sql.ErrNoRows {
+			return echo.NewHTTPError(http.StatusInternalServerError, "SHA256 304 ERROR: "+err.Error())
+		}
+	}
+	// SHA合致したら304を返す
+	if nowSha == dbSha {
+		return c.NoContent(http.StatusNotModified)
+	}
+
 	var image []byte
 	if err := tx.GetContext(ctx, &image, "SELECT image FROM icons WHERE user_id = ?", user.ID); err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
@@ -432,6 +445,10 @@ func fillUserResponse(ctx context.Context, tx *sqlx.Tx, userModel UserModel) (Us
 		}
 	}
 	iconHash := sha256.Sum256(image)
+	// 最新のSHAを更新
+	if _, err := tx.ExecContext(ctx, "UPDATE latest_sha256 SET sha = ? WHERE user_id = ?", iconHash, userModel.ID); err != nil {
+		// エラーが起きても何もしない
+	}
 
 	user := User{
 		ID:          userModel.ID,
