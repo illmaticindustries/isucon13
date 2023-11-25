@@ -6,6 +6,7 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	"log"
 	"net/http"
 	"os"
 	"os/exec"
@@ -27,6 +28,8 @@ const (
 	defaultUserIDKey         = "USERID"
 	defaultUsernameKey       = "USERNAME"
 	bcryptDefaultCost        = bcrypt.MinCost
+	IMAGE_DIR                = "/home/isucon/webapp/public/assets/images/"
+	ext                      = "png"
 )
 
 var fallbackImage = "../img/NoImage.jpg"
@@ -105,6 +108,19 @@ func getIconHandler(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusInternalServerError, "failed to get user: "+err.Error())
 	}
 
+	// SHAを取得して変化がなければ304を返す
+	nowSha := c.Request().Header.Get("If-None-Match")
+	var dbSha string
+	if err := tx.GetContext(ctx, &dbSha, "SELECT sha FROM latest_sha256 WHERE user_id = ?", user.ID); err != nil {
+		if err != sql.ErrNoRows {
+			return echo.NewHTTPError(http.StatusInternalServerError, "SHA256 304 ERROR: "+err.Error())
+		}
+	}
+	// SHA合致したら304を返す
+	if nowSha != "" && nowSha == dbSha {
+		return c.NoContent(http.StatusNotModified)
+	}
+
 	var image []byte
 	if err := tx.GetContext(ctx, &image, "SELECT image FROM icons WHERE user_id = ?", user.ID); err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
@@ -148,6 +164,19 @@ func postIconHandler(c echo.Context) error {
 	rs, err := tx.ExecContext(ctx, "INSERT INTO icons (user_id, image) VALUES (?, ?)", userID, req.Image)
 	if err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, "failed to insert new user icon: "+err.Error())
+	}
+
+	// 画像を生成する
+	now := time.Now() // 現在の時刻を取得
+	unixTime := now.Unix()
+	filename := IMAGE_DIR + fmt.Sprintf("%d-", userID) + fmt.Sprintf("%d", unixTime) + "." + ext
+	f, err := os.Create(filename)
+	if err != nil {
+		log.Fatalf("file create error")
+	}
+	_, err = f.Write(req.Image)
+	if err != nil {
+		log.Fatalf("file write error")
 	}
 
 	iconID, err := rs.LastInsertId()
@@ -416,6 +445,10 @@ func fillUserResponse(ctx context.Context, tx *sqlx.Tx, userModel UserModel) (Us
 		}
 	}
 	iconHash := sha256.Sum256(image)
+	// 最新のSHAを更新
+	if _, err := tx.ExecContext(ctx, "UPDATE latest_sha256 SET sha = ? WHERE user_id = ?", iconHash, userModel.ID); err != nil {
+		// エラーが起きても何もしない
+	}
 
 	user := User{
 		ID:          userModel.ID,
