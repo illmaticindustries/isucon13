@@ -486,7 +486,7 @@ func getLivecommentReportsHandler(c echo.Context) error {
 }
 
 // TagModel はtagsテーブルのデータ構造を表します。
-type TagModel struct {
+type Tagty struct {
 	ID   int64
 	Name string
 }
@@ -524,7 +524,7 @@ func fillLivestreamResponse(ctx context.Context, tx *sqlx.Tx, livestreamModel Li
 	const query = `SELECT t.id, t.name FROM tags t INNER JOIN livestream_tags lt ON t.id = lt.tag_id WHERE lt.livestream_id = ?`
 
 	// タグ情報を取得するためにクエリを実行します。
-	var tagModels []TagModel
+	var tagModels [Tagty]
 	if err := tx.SelectContext(ctx, &tagModels, query, livestreamModel.ID); err != nil {
 		return Livestream{}, err
 	}
