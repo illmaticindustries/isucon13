@@ -465,23 +465,23 @@ func fillUserResponse(ctx context.Context, tx *sqlx.Tx, userModel UserModel) (Us
 		if !errors.Is(err, sql.ErrNoRows) {
 			return User{}, err
 		}
-		image, err = os.ReadFile(fallbackImage)
-		if err != nil {
-			return User{}, err
-		}
-		iconHash := sha256.Sum256(image)
-		dbSha = fmt.Sprintf("%x", iconHash)
+		// image, err = os.ReadFile(fallbackImage)
+		// if err != nil {
+		// return User{}, err
+		// }
+		// iconHash := sha256.Sum256(image)
+		dbSha = "d9f8294e9d895f81ce62e73dc7d5dff862a4fa40bd4e0fecf53f7526a8edcac0"
 	}
 	if dbSha != "" {
 		var found bool
 		dbSha, found = cache.Get(int(userModel.ID))
 		if !found {
-			image, err = os.ReadFile(fallbackImage)
-			if err != nil {
-				return User{}, err
-			}
-			iconHash := sha256.Sum256(image)
-			dbSha = fmt.Sprintf("%x", iconHash)
+			// image, err = os.ReadFile(fallbackImage)
+			// if err != nil {
+			// 	return User{}, err
+			// }
+			// iconHash := sha256.Sum256(image)
+			dbSha = "d9f8294e9d895f81ce62e73dc7d5dff862a4fa40bd4e0fecf53f7526a8edcac0"
 		}
 	}
 
